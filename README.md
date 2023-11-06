@@ -5,6 +5,7 @@ This section of the code focuses on data visualization and analysis. It includes
 
 ## Table of Contents
 
+- [Python libraries](#Libraries)
 - [Multiple Scatter Plots](#multiple-scatter-plots)
 - [Interactive Scatter Plot with Dropdown Menus](#interactive-scatter-plot-with-dropdown-menus)
 - [Delta Values Scatter Plots with Error Bars](#delta-values-scatter-plots-with-error-bars)
