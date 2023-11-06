@@ -11,7 +11,6 @@ This section of the code focuses on data visualization and analysis. It includes
 - [Delta Values Scatter Plots per Standard vs Time](#delta-values-scatter-plots-per-standard-vs-time)
 
 ## Libraries
-## Import Statements
 
 These import statements include the necessary libraries and modules required for the code.
 
@@ -42,9 +41,6 @@ Python package installer "pip" (https://pypi.org/project/pip/) is used to instal
 **Usage**
 
 These imports are essential for various aspects of the code, such as data handling, visualization, web application development, and regular expression operations.
-
-```python
-# Import these libraries and modules to access their functionality in your code.
 
 ## Multiple Scatter Plots
 
