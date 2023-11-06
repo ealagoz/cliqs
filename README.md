@@ -10,6 +10,42 @@ This section of the code focuses on data visualization and analysis. It includes
 - [Delta Values Scatter Plots with Error Bars](#delta-values-scatter-plots-with-error-bars)
 - [Delta Values Scatter Plots per Standard vs Time](#delta-values-scatter-plots-per-standard-vs-time)
 
+## Libraries
+## Import Statements
+
+These import statements include the necessary libraries and modules required for the code.
+
+**Libraries and Modules**
+
+- `pandas`: A data manipulation library for Python, providing data structures and operations for working with numerical, textual, and categorical data.
+- `plotly.express`: A high-level API for creating interactive visualizations with Plotly, simplifying the creation of common plot types like scatter plots, line plots, and bar charts.
+- `plotly.graph_objects`: A lower-level API for creating interactive visualizations with Plotly, offering more fine-grained control over plot appearance and behavior.
+- `plotly.subplots make_subplots`: A module for creating subplots with Plotly, providing a function for generating figures with multiple plots.
+- `flask`: A lightweight Python web framework for building web applications, providing tools for routing requests, handling data, and rendering templates.
+    - `flask send_file`: A Flask function for sending files as responses.
+    - `flask url_for`: A Flask function for generating URLs for routes and static files.
+    - `flask render_template`: A Flask function for rendering HTML templates.
+- `re`: The Python regular expressions library, used for pattern matching and searching.
+- `plotly.io`: A module for reading and writing Plotly figures, including functions for saving and loading figures in various formats.
+- `re`: A module for working with regular expressions, providing functions for matching patterns in text and extracting data from text.
+- `ipywidgets`: A library for creating interactive widgets in Jupyter notebooks, offering various widget types like sliders, dropdown menus, and text boxes.
+- `IPython.display`: A module for displaying objects in Jupyter notebooks, providing functions for displaying text, images, and visualizations.
+    - `display`: A function for displaying objects in Jupyter notebooks, including text, images, and visualizations.
+    - `clear_out`: A function for clearing the output area of a Jupyter notebook cell.
+
+**Installation**
+Python package installer "pip" (https://pypi.org/project/pip/) is used to install libraries:
+- Python 3.11.0 version is used for the analysis
+- pip install pandas plotly flask IPython ipywidgets
+- re is already included in Python built-in libraries
+
+**Usage**
+
+These imports are essential for various aspects of the code, such as data handling, visualization, web application development, and regular expression operations.
+
+```python
+# Import these libraries and modules to access their functionality in your code.
+
 ## Multiple Scatter Plots
 
 The code in this section demonstrates how to create multiple scatter plots to visualize the relationship between `Weight (mg)` and various numeric columns, categorized by `Kiel acid line number`. It follows a step-by-step explanation of the code, including defining subplot height, calculating subplot layout, creating subplot grids, and more.
