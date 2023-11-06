@@ -15,8 +15,6 @@ This section of the code focuses on data visualization and analysis. It includes
 
 These import statements include the necessary libraries and modules required for the code.
 
-**Libraries and Modules**
-
 - `pandas`: A data manipulation library for Python, providing data structures and operations for working with numerical, textual, and categorical data.
 - `plotly.express`: A high-level API for creating interactive visualizations with Plotly, simplifying the creation of common plot types like scatter plots, line plots, and bar charts.
 - `plotly.graph_objects`: A lower-level API for creating interactive visualizations with Plotly, offering more fine-grained control over plot appearance and behavior.
@@ -38,10 +36,6 @@ Python package installer "pip" (https://pypi.org/project/pip/) is used to instal
 - Python 3.11.0 version is used for the analysis
 - pip install pandas plotly flask IPython ipywidgets
 - re is already included in Python built-in libraries
-
-**Usage**
-
-These imports are essential for various aspects of the code, such as data handling, visualization, web application development, and regular expression operations.
 
 ## Multiple Scatter Plots
 
