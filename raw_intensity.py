@@ -132,6 +132,9 @@ def raw_standard_intensity_plots(df: pd.DataFrame):
   # Get unique identifiers
   unique_identifiers = df['Identifier 1'].unique()
 
+  # Empty figure dict
+  figures = {}
+  
   # Create a separate figure for each unique identifier
   for identifier in unique_identifiers:
     # Filter DataFrame for the current identifier
@@ -169,7 +172,8 @@ def raw_standard_intensity_plots(df: pd.DataFrame):
                       xaxis_title='Cycle',
                       yaxis_title='Raw intensity m44',
                       showlegend=False)
-
+    figure[] = fig
+    
     return fig
 
 
