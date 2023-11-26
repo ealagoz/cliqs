@@ -172,7 +172,7 @@ def raw_standard_intensity_plots(df: pd.DataFrame):
                       xaxis_title='Cycle',
                       yaxis_title='Raw intensity m44',
                       showlegend=False)
-    figure[] = fig
+    figure[identifier] = fig
     
     return fig
 
