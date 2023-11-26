@@ -5,7 +5,7 @@ description = ""
 authors = ["Enver Alagoz <enver.alagoz@uib.no>"]
 
 [tool.poetry.dependencies]
-python = ">=3.10.0,<3.11"
+python = "env use"
 numpy = "^1.22.2"
 matplotlib = "^3.5.2"
 pandas = "^1.4.2"
