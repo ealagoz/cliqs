@@ -17,7 +17,7 @@ This repository contains a Python-based web application for clumped isotope data
 1. Install the required Python libraries:
 
    ```bash
-   pip install streamlit pandas plotly
+   pip install streamlit streamlit_option_menu pandas numpy scipy plotly
 
 ## Clone repository
 git clone https://github.com/ealagoz/farlab_climb_data_quality.git
@@ -33,7 +33,7 @@ streamlit run main.py
 -- Customize and generate plots under **Intensities** tab as needed.
 
 ## Screenshots
-[App screenshot](./screenshots/web_app_screenshot.jpg)
+![App screenshot](./screenshots/web_app_screenshot.jpg)
 
 ## Contributing
 Contributions are welcome! 
