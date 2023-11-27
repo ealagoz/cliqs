@@ -25,13 +25,16 @@ pd.options.mode.chained_assignment = None  # "warn" or "raise"
 
 # Streamlit app specs
 def app_specs():
+  """
+    Set the Streamlit web app page specifications.
+    """
   # Set the page title and icon
-  st.set_page_config(page_title="Clumped Isotope",
+  st.set_page_config(page_title="Climb Isotope",
                      page_icon="./farlab_logo.png",
                      layout="wide")
 
   # Create a custom header with a gradient background
-  st.title("Clumped Isotope Data Monitoring")
+  st.title("Climb Isotope Data Monitoring")
   st.markdown("""<style>.block-container{padding-top:2rem;}</style>""",
               unsafe_allow_html=True)
 
@@ -45,7 +48,15 @@ def app_specs():
 
 
 def main():
+  """
+    The main function of the Streamlit web app.
 
+    Parameters:
+    None
+
+    Returns:
+    None 
+  """
   # Set the page title and icon
   app_specs()
 
