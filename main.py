@@ -9,7 +9,6 @@ import plotly.io as pio
 from file_handler import upload_file, open_excel_file
 # import functions from kiel.py
 from kiel import get_kiel_data, generate_kiel_plots
-from raw_intensity import raw_standard_intensity_ratio_fit_plots
 # import functions from standards.py
 from standards import numeric_columns_plots, isotope_std_plots
 from user_generated_plot import user_generated_plots
