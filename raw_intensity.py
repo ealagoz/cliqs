@@ -132,8 +132,11 @@ def raw_standard_intensity_plots(df: pd.DataFrame):
   # Get unique identifiers
   unique_identifiers = df['Identifier 1'].unique()
 
-  # Empty figure dict
-  figures = {}
+  # Create a subplot for each unique identifier
+  fig = subplots.make_subplots(rows=len(unique_identifiers),
+                                cols=1,
+                                subplot_titles=unique_identifiers,
+                              )
   
   # Create a separate figure for each unique identifier
   for identifier in unique_identifiers:
@@ -141,7 +144,7 @@ def raw_standard_intensity_plots(df: pd.DataFrame):
     subset_df = df[df['Identifier 1'] == identifier]
 
     # Create an empty figure
-    fig = go.Figure()
+    # fig = go.Figure()
 
     # Iterate through the rows of the subset DataFrame
     for is_ref, values, time_code in zip(subset_df['Is Ref _'],
@@ -165,16 +168,18 @@ def raw_standard_intensity_plots(df: pd.DataFrame):
               "<b>Intensity [mV]</b>: %{y:.2f}<br>" +
               "<b>Cycle</b>: %{x}<br>" + f"<b>Datetime</b>: {time_code}<br>" +
               "<extra></extra>",  # Hide the extra hover information
-          ))
+          ),
+          row=unique_identifiers.tolist().index(identifier) + 1,
+          col=1)
 
-    # Customize the layout of the plot
-    fig.update_layout(title=f'Raw intensity m44 - Standard: {identifier}',
-                      xaxis_title='Cycle',
-                      yaxis_title='Raw intensity m44',
-                      showlegend=False)
-    figures[identifier] = fig
-    
-    return fig
+  # Customize the layout of the plot
+  fig.update_layout(height=400*len(unique_identifiers),
+                    title='Raw intensity m44 per standard',
+                    xaxis_title='Cycle',
+                    yaxis_title='Raw intensity m44',
+                    showlegend=False)
+  
+  return fig
 
 
 def raw_standard_intensity_ratio_plots(df: pd.DataFrame):
