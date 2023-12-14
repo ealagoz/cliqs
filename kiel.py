@@ -115,7 +115,7 @@ def generate_kiel_plots(df: pd.DataFrame) -> go.Figure:
   cols = [
       "acid_temperature", "leakrate", "p_no_acid", "p_gases",
       "reference_refill", "total_CO2", "vm1_after_transfer",
-      "initial_intensity", "bellow_position", "reference_intensity",
+      "initial_intensity", "reference_intensity",
       "reference_bellow_position"
   ]
 
@@ -128,7 +128,7 @@ def generate_kiel_plots(df: pd.DataFrame) -> go.Figure:
       "total_CO2": "Total CO2 [mbar]",
       "vm1_after_transfer": "VM1 aftr CO2 Transfer. [mbar]",
       "initial_intensity": "Init Intensity [mV]",
-      "bellow_position": "Bellow Compression [%]",
+      # "bellow_position": "Bellow Compression [%]",
       "reference_refill": "Reference Refill",
       "reference_intensity": "Ref Bellow Pressure [mbar]",
       "reference_bellow_position": "Ref Bellow Compression [%]",
