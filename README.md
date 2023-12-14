@@ -36,7 +36,7 @@ streamlit run main.py
 -- Customize and generate plots under **Intensities** tab as needed.
 
 ## Screenshots
-![App screenshot](./screenshots/web_app_screenshot.jpg)
+![App screenshot](./screenshots/cliqs_screenshot.jpg)
 
 ## Contributing
 Contributions are welcome! 
