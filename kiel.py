@@ -127,9 +127,9 @@ def generate_kiel_plots(df: pd.DataFrame) -> go.Figure:
       "p_gases": "P gases [mbar]",
       "total_CO2": "Total CO2 [mbar]",
       "vm1_after_transfer": "VM1 aftr CO2 Transfer. [mbar]",
-      "initial_intensity": "Init Intensity [mV]",
+      "initial_intensity": "Initial Intensity (before balancing) [mV]",
       # "bellow_position": "Bellow Compression [%]",
-      "reference_refill": "Reference Refill",
+      "reference_refill": "Reference Refill [mbar]",
       "reference_intensity": "Ref Bellow Pressure [mbar]",
       "reference_bellow_position": "Ref Bellow Compression [%]",
   }
