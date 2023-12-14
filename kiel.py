@@ -19,9 +19,24 @@ def get_kiel_data(df: pd.DataFrame) -> pd.DataFrame:
     """
 
   info_keys = [
-      "Acid", "LeakRate", "x drops", "P no Acid", "P gases", "RefRe",
-      "Total CO2", "VM1 aftr Trfr.", "Init int", "Bellow Pos", "RefI", "RefPos"
+      "Acid", "LeakRate", "P no Acid", "P gases", "RefRe", "Total CO2",
+      "VM1 aftr Trfr.", "Init int", "Bellow Pos", "RefI", "RefPos"
   ]
+
+  col_rename_dict = {
+      "Acid": "acid_temperature",
+      "LeakRate": "leakrate",
+      "P no Acid": "p_no_acid",
+      "P gases": "p_gases",
+      "RefRe": "reference_refill",
+      "Total CO2": "total_CO2",
+      "VM1 aftr Trfr.": "vm1_after_transfer",
+      "Init int": "initial_intensity",
+      "Bellow Pos": "bellow_position",
+      "RefI": "reference_intensity",
+      "RefPos": "reference_bellow_position"
+  }
+
   key_re_dict = {
       "Acid": "\s?:\s+([\d.]+)",
       "LeakRate": "\s?:\s+([\d.]+)",
@@ -35,13 +50,18 @@ def get_kiel_data(df: pd.DataFrame) -> pd.DataFrame:
       "RefI": "\s?:\s+mBar\s+r\s+([\d.]+)\s+pos\s+r\s+[\d.]+"
   }
 
+  # Dictonary for extracted Kiel pars
   extracted_values = {key: [] for key in info_keys}
+  # List for Kiel Line and Time Code
+  time_codes = []  # list for storing Time Code values
+  lines = []  # list for storing Line values
 
-  for row in df["Information"]:
+  # Iterate over each row in the DataFrame
+  for index, row in df.iterrows():
     row_data = {}
     for key, value in key_re_dict.items():
       pattern = f'{key}{value}'
-      match = re.search(pattern, row)
+      match = re.search(pattern, row["Information"])
       if match:
         if key != "RefI":
           row_data[key] = match.group(1)
@@ -55,11 +75,20 @@ def get_kiel_data(df: pd.DataFrame) -> pd.DataFrame:
     for key in info_keys:
       extracted_values[key].append(row_data.get(key, None))
 
-  df_kiel_par = pd.DataFrame(extracted_values)
-  df_kiel_par["Line"] = df["Line"]
+    # Append Time Code and Line for each row
+    time_codes.append(row["Time Code"])
+    lines.append(row["Line"])
 
-  # convert all columns of DataFrame
-  df_kiel_par = df_kiel_par.apply(pd.to_numeric)
+  df_kiel_par = pd.DataFrame(extracted_values)
+  df_kiel_par.rename(columns=col_rename_dict, inplace=True)
+  # Add 'Time Code' & 'Line' columns from df
+  df_kiel_par["line"] = lines
+  df_kiel_par["time"] = time_codes
+
+  # Convert all columns of DataFrame to numeric, except for Time Code
+  numeric_cols = df_kiel_par.columns.drop('time')
+  df_kiel_par[numeric_cols] = df_kiel_par[numeric_cols].apply(
+      lambda col: pd.to_numeric(col, errors='coerce'))
 
   # Ensure that dataframe to be returned is a dataframe
   assert isinstance(df_kiel_par,
@@ -79,25 +108,30 @@ def generate_kiel_plots(df: pd.DataFrame) -> go.Figure:
     fig (plotly.graph_objects.Figure): The figure containing the plots.
     """
   # Set subplot titles
+  # cols = [
+  #     'Acid', 'LeakRate', 'P no Acid', 'P gases', 'RefRe', 'Total CO2',
+  #     'VM1 aftr Trfr.', 'Init int', 'Bellow Pos', 'RefI', 'RefPos'
+  # ]
   cols = [
-      'Acid', 'LeakRate', 'P no Acid', 'P gases', 'RefRe', 'Total CO2',
-      'VM1 aftr Trfr.', 'Init int', 'Bellow Pos', 'RefI', 'RefPos', 'x drops'
+      "acid_temperature", "leakrate", "p_no_acid", "p_gases",
+      "reference_refill", "total_CO2", "vm1_after_transfer",
+      "initial_intensity", "bellow_position", "reference_intensity",
+      "reference_bellow_position"
   ]
 
   # Custom dictionary of text per def_kiel_par column
   kiel_par_dict = {
-      "Acid": "Acid temperature [°C]",
-      "LeakRate": "Leak Rate [mbar/min]",
-      "P no Acid": "P no Acid [mbar]",
-      "P gases": "P gases [mbar]",
-      "Total CO2": "Total CO2 [mbar]",
-      "VM1 aftr Trfr.": "VM1 aftr CO2 Transfer. [mbar]",
-      "Init int": "Init Intensity [mV]",
-      "Bellow Pos": "Bellow Compression [%]",
-      "RefRe": "RefRe",
-      "RefI": "Ref Bellow Pressure [mbar]",
-      "RefPos": "Ref Bellow Compression [%]",
-      "x drops": "x drops [count]"
+      "acid_temperature": "Acid temperature [°C]",
+      "leakrate": "Leak Rate [mbar/min]",
+      "p_no_acid": "P no Acid [mbar]",
+      "p_gases": "P gases [mbar]",
+      "total_CO2": "Total CO2 [mbar]",
+      "vm1_after_transfer": "VM1 aftr CO2 Transfer. [mbar]",
+      "initial_intensity": "Init Intensity [mV]",
+      "bellow_position": "Bellow Compression [%]",
+      "reference_refill": "Reference Refill",
+      "reference_intensity": "Ref Bellow Pressure [mbar]",
+      "reference_bellow_position": "Ref Bellow Compression [%]",
   }
 
   # define subplot height and length
@@ -121,7 +155,7 @@ def generate_kiel_plots(df: pd.DataFrame) -> go.Figure:
   # row, col = 1, 1
 
   # Get unique values in the "Line" column
-  lines = df["Line"].unique()
+  lines = df["line"].unique()
 
   # Define colors for each line
   colors = ['blue', 'red']  # Add more colors if there are more than two lines
@@ -129,13 +163,13 @@ def generate_kiel_plots(df: pd.DataFrame) -> go.Figure:
   # Iterate through the columns in df_kiel_par and create separate plots
   for i, column in enumerate(cols):
     for j, line in enumerate(lines):
-      filtered_data = df[df["Line"] == line]
+      filtered_data = df[df["line"] == line]
 
       # Create a scatter plot trace with custom colors and hover template
       fig.add_trace(
           go.Scatter(
-              x=filtered_data[filtered_data["Line"] == line].index,
-              y=filtered_data[filtered_data["Line"] == line][column],
+              x=filtered_data[filtered_data["line"] == line].index,
+              y=filtered_data[filtered_data["line"] == line][column],
               mode='markers',
               name=f"Line {line}",  # Set the name of the data series,
               marker=dict(color=colors[
