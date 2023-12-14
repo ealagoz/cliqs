@@ -28,12 +28,13 @@ def app_specs():
     Set the Streamlit web app page specifications.
     """
   # Set the page title and icon
-  st.set_page_config(page_title="Climb Isotope",
+  st.set_page_config(page_title="CLIQS",
                      page_icon="./farlab_logo.png",
                      layout="wide")
 
   # Create a custom header with a gradient background
-  st.title("Climb Isotope Data Monitoring")
+  st.header("CLIQS", divider="blue")
+  st.subheader("Clumped Isotope Data Quality Monitoring Control System")
   st.markdown("""<style>.block-container{padding-top:2rem;}</style>""",
               unsafe_allow_html=True)
 
