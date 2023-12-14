@@ -33,7 +33,7 @@ def app_specs():
                      layout="wide")
 
   # Create a custom header with a gradient background
-  st.header("CLIQS (Clumped Isotope Data Quality Monitoring Control System)", divider="blue")
+  st.header("CLIQS (Clumped Isotope Data Quality Monitoring Control System)")
   st.markdown("""<style>.block-container{padding-top:2rem;}</style>""",
               unsafe_allow_html=True)
 
