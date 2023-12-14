@@ -1,7 +1,7 @@
-# Climb Isotope Data Monitoring Web App
+# CLIQS (Clumped Isotope Data Quality Monitoring) Web App
 
 ## Application
-[Climb Isotope Data Monitoring App](https://farlab-climb-data-quality.streamlit.app/)
+[CLIQS App](https://farlab-climb-data-quality.streamlit.app/)
 
 ## Overview
 
