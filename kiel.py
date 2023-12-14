@@ -32,7 +32,7 @@ def get_kiel_data(df: pd.DataFrame) -> pd.DataFrame:
       "Total CO2": "total_CO2",
       "VM1 aftr Trfr.": "vm1_after_transfer",
       "Init int": "initial_intensity",
-      "Bellow Pos": "bellow_position",
+      # "Bellow Pos": "bellow_position",
       "RefI": "reference_intensity",
       "RefPos": "reference_bellow_position"
   }
@@ -45,7 +45,7 @@ def get_kiel_data(df: pd.DataFrame) -> pd.DataFrame:
       "Total CO2": "\s?:\s+([\d.]+)",
       "Init int": "\s?:\s+([\d.]+)",
       "VM1 aftr Trfr.": "\s?:\s+([\d.]+)",
-      "Bellow Pos": "\s?:\s+([\d.]+)",
+      # "Bellow Pos": "\s?:\s+([\d.]+)",
       "RefRe": "\s?:\s+R\s+mBar\s+([\d.]+)",
       "RefI": "\s?:\s+mBar\s+r\s+([\d.]+)\s+pos\s+r\s+[\d.]+"
   }
@@ -57,7 +57,7 @@ def get_kiel_data(df: pd.DataFrame) -> pd.DataFrame:
   lines = []  # list for storing Line values
 
   # Iterate over each row in the DataFrame
-  for index, row in df.iterrows():
+  for _, row in df.iterrows():
     row_data = {}
     for key, value in key_re_dict.items():
       pattern = f'{key}{value}'
