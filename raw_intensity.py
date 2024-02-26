@@ -5,7 +5,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy import stats
-
+# Import the standard_marker_color() function from standards.py
+from standards import standard_marker_color 
 
 def group_standard_intensities(df: pd.DataFrame):
   """
@@ -576,47 +577,3 @@ def raw_standard_intensity_ratio_fit_plots(df: pd.DataFrame):
   )])
 
   return fig, fig_table
-
-# Function for Identifier coloring
-def standard_marker_color(identifier):
-    # Define colors, markers, and identifiers
-    colors = ['green', 'violet', 'violet', 
-              'blue', 'red', 'lightblue',
-              'orange', 'green', 'green',
-              'red', 'red', 'blue',
-              'blue', 'lightblue', 'orange', "green",
-              'green', 'violet', 'violet', 'orange',
-              'violet', 'green', 'red',
-              'blue', 'green', 'lightblue'
-              ]
-
-    markers = ['triangle-up', 'circle', 'triangle-down',
-           'circle', 'triangle-up', 'circle',
-           'circle', 'circle', 'triangle-down',
-           'square', 'triangle-down', 'square',
-           'triangle-down', 'circle', 'triangle-up', 'square',
-           'triangle-up', 'triangle-up', 'square', 'cross',
-           'circle-open', 'triangle-down-open', 'square-open',
-           'square-open', 'triangle-up-open', 'circle'
-           ]
-    
-    identifiers = ['Carrara', 'CHALK', 'CHALK_new aliqu', 
-                   'Equ Gas 25C', 'Fast Haga', 'Heated gas', 
-                   'IAEA C1', 'IAEA C2', 'IAEA C2_new ali', 
-                   'ISO A', 'Isolab A_new al', 'ISO B', 
-                   'ISO B_new aliq', 'Merck', 'NBS18', 'NBS19', 
-                   'Riedel', 'Speleo 2-8E', 'Speleo 9-25G', 'UN_CM12', 
-                   'CHALK_2', '_IAEA C2_2', '_Isolab A 2', 
-                   'ISOB_2', '_Riedel 2', 'Merck'
-                   ] 
-
-    # Print the identifier that the function is trying to find
-    # print(f"Looking for identifier: {identifier}")
-
-    # Create dictionaries that map each identifier to a color and a marker
-    color_dict = {identifier: colors[i % len(colors)] for i, identifier in enumerate(identifiers)}
-    marker_dict = {identifier: markers[i % len(markers)] for i, identifier in enumerate(identifiers)}
-
-    # Return the color and marker corresponding to the given identifier
-    # Return 'black' and 'circle' if the identifier is not found
-    return color_dict.get(identifier, 'black'), marker_dict.get(identifier, 'circle')

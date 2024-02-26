@@ -17,7 +17,7 @@ password = os.getenv('password')
 # Use variables to connect to the database instead of hardcoding the values
 db_url = f"postgresql://{username}:{password}@{hostname}/{database}"
 # db_url = os.environ["DATABASE_URL"]
-print(f"Using database: {db_url}")
+# print(f"Using database: {db_url}")
 
 
 # Database connection decorator
@@ -132,6 +132,16 @@ def insert_kiel_data(cur, df: pd.DataFrame):
 
   print("Data inserted successfully, duplicates ignored based on timestamp.")
 
+# Fetch kiel data as pandas DataFrame
+@database_connection
+def fetch_kiel_data_as_dataframe(cur):
+    query = "SELECT * FROM kiel_parameters"
+    with cur.connection.cursor() as cursor:
+        cursor.execute(query)
+        colnames = [desc[0] for desc in cursor.description]
+        records = cursor.fetchall()
+    df = pd.DataFrame(records, columns=colnames)
+    return df
 
 # Read postresql database table users
 @database_connection
