@@ -187,9 +187,7 @@ def main():
       process_uploaded_file(uploaded_file)
   elif option == "Time Series":
     # Display the time series plots
-    figs = plot_kiel_parameters_ts()  # Call the function from time_series.py
-    for fig in figs:
-      st.plotly_chart(fig, use_container_width=True)
+    kiel_par_time_series()  # Call the function from time_series.py
 
 
   # Add a logo to the header
