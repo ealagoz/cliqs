@@ -29,6 +29,14 @@ def group_standard_intensities(df: pd.DataFrame):
   # Group the data by the group_columns
   grouped_data = df.groupby(group_columns,
                             as_index=False).agg(lambda x: list(x))
+
+  # Get first "Time Code" for each unique identifier and Is Ref
+  first_time_code = df.groupby(['Identifier 1', 'Is Ref _'])['Time Code'].first().reset_index()
+  first_time_code.rename(columns={'Time Code': 'First Time Code'}, inplace=True)
+
+  # Merge the first Time Code back to grouped_data
+  grouped_data = grouped_data.merge(first_time_code, on=['Identifier 1', 'Is Ref _'], how='left')
+
   # Rename the columns
   grouped_data.columns = [
       "_".join(col).strip() if isinstance(col, tuple) else col
@@ -47,17 +55,23 @@ def group_standard_intensities(df: pd.DataFrame):
 
   # Calculate intensity ratios
   for intensity_column, ratio_column in zip(intensity_cols, ratio_columns):
-  
+
       # Update the existing column with new values
       df_raw_int_ratio[ratio_column] = df_raw_int_ratio.apply(lambda row: [a / b for a, b in zip(row[intensity_column], row['rIntensity 44'])], axis=1)
 
   # Reshape the DataFrame for plotting
-  df_raw_int_ratio = df_raw_int_ratio.melt(id_vars=['Identifier 1', 'Is Ref _', 'Time Code'],
+  df_raw_int_ratio = df_raw_int_ratio.melt(id_vars=['Identifier 1', 'Is Ref _', 'First Time Code'],
                             value_vars= [f"{col}_ratio" for col in intensity_cols],
                             var_name='Intensity', value_name='Ratio')
 
   # Flatten the lists in the 'Ratio' column
   df_raw_int_ratio = df_raw_int_ratio.explode('Ratio')
+
+  # Correct Time Code for each row based on the corresponding first Time Code for each identifier
+  df_raw_int_ratio['Time Code'] = df_raw_int_ratio['First Time Code']
+
+  # Drop the 'First Time Code'
+  df_raw_int_ratio.drop(columns=['First Time Code'], inplace=True)
 
   # Map 'Is Ref' values to 'Sample' and 'Reference'
   df_raw_int_ratio['Is Ref _'] = df_raw_int_ratio['Is Ref _'].map({0: "Reference", 1: "Sample"})
@@ -70,6 +84,11 @@ def group_standard_intensities(df: pd.DataFrame):
   df_raw_int_ratio['Identifier 1'] = df_raw_int_ratio['Identifier 1'].astype('category')
   df_raw_int_ratio['Is Ref _'] = df_raw_int_ratio['Is Ref _'].astype('category')
   df_raw_int_ratio['Time Code'] = df_raw_int_ratio['Time Code'].astype('datetime64[ns]')
+
+  # Replace the grouped 'Time Code' with the first 'Time Code'
+  grouped_data['Time Code'] = grouped_data['First Time Code']
+  # Drop the extra 'First Time Code' column
+  grouped_data.drop(columns=['First Time Code'], inplace=True)
 
   # Create new columns in df_raw_int_ratios storing first intensity values/cycles
   intensity_columns = [f'rIntensity {i}' for i in range(44, 50)]
@@ -86,10 +105,13 @@ def group_standard_intensities(df: pd.DataFrame):
 
   # Ensure that dataframe to be returned is a dataframe
   assert isinstance(df_raw_int_ratio_new,
-                    pd.DataFrame), "df_kiel_par must be a DataFrame"
+                    pd.DataFrame), "df_raw_int_ratio_new must be a DataFrame"
+
+  # Ensure that grouped_data to be returned is a dataframe
+  assert isinstance(grouped_data,
+                        pd.DataFrame), "grouped_data must be a DataFrame"
 
   return grouped_data, df_raw_int_ratio_new
-
 
 def raw_standard_intensity_stats_plots(df: pd.DataFrame):
   """
@@ -170,7 +192,6 @@ def raw_standard_intensity_stats_plots(df: pd.DataFrame):
 
   return intensity_stats, fig
 
-
 def raw_standard_intensity_plots(df: pd.DataFrame):
   """
   Generates scatter plots of raw intensity values for each Identifier.
@@ -183,7 +204,7 @@ def raw_standard_intensity_plots(df: pd.DataFrame):
   fig : plotly.graph_objects.Figure
   A plotly figure containing scatter plots of raw intensity values for each Identifier.
     """
-  
+
   # Ensure we have a pd.Dataframe object
   assert isinstance(df, pd.DataFrame), "Input must be a pandas DataFrame"
 
@@ -240,7 +261,7 @@ def raw_standard_intensity_plots(df: pd.DataFrame):
             fig.update_xaxes(title_text='Cycle', row=subplot_counter, col=1)
             fig.update_yaxes(title_text=f'{intensity} - {identifier} [mV]', row=subplot_counter, col=1)
             fig.update_layout(showlegend=False)
-        
+
             # Increment the subplot counter
             subplot_counter += 1
 
@@ -253,7 +274,6 @@ def raw_standard_intensity_plots(df: pd.DataFrame):
     )
     # Return the figure
   return fig
-
 
 def raw_standard_intensity_ratio_plots(df: pd.DataFrame):
   """
@@ -268,7 +288,7 @@ def raw_standard_intensity_ratio_plots(df: pd.DataFrame):
   A dictionary of plotly figures
   df_raw_int_ratio: pd.Dataframe.
   """
-  
+
   # Ensure we have a pd.Dataframe object
   assert isinstance(df, pd.DataFrame), "Input must be a pandas DataFrame"
 
@@ -288,7 +308,7 @@ def raw_standard_intensity_ratio_plots(df: pd.DataFrame):
   for idx, intensity in enumerate(unique_intensities, start=1):
       # Filter dataframe for the current intensity
       df_filtered = df[df['Intensity'] == intensity]
-      
+
       # Create a new figure
       # fig = go.Figure()
       # Check if the legend for this identifier has already been shown
@@ -313,7 +333,7 @@ def raw_standard_intensity_ratio_plots(df: pd.DataFrame):
                   color=color,# standard_marker_color(identifier)[0],  # Set color
                   symbol= marker# standard_marker_color(identifier)[1]  # Set marker style
               ),
-              
+
               customdata=np.stack((df_identifier['Identifier 1'], 
                                   df_identifier['Is Ref _'], 
                                   df_identifier['Intensity'], 
@@ -342,7 +362,6 @@ def raw_standard_intensity_ratio_plots(df: pd.DataFrame):
 
   return fig
 
-
 def raw_standard_intensity_ratio_fit_plots(df: pd.DataFrame):
   """
   Generates scatter plots of raw intensity ratios and fitted intensity ratios.
@@ -366,7 +385,9 @@ def raw_standard_intensity_ratio_fit_plots(df: pd.DataFrame):
   identifier_stats = {}
 
   # Placeholder for table data
-  table_data = {'Identifier': [], 'Is Ref': [], 'Intensity': [], 'Slope': [], 'Intercept': [], 'R²': []}
+  table_data = {'Identifier': [], 'Is Ref': [], 'Intensity': [], 'Initial Intensity 44': [], 'Slope': [], 'Intercept': [], 'R²': []}
+  # Dictionary to store the first 'start_rIntensity 44' value for each identifier and Is Ref combination
+  first_start_rIntensity_44 = {}
 
   for identifier in df['Identifier 1'].unique():
       identifier_stats[identifier] = []
@@ -388,6 +409,9 @@ def raw_standard_intensity_ratio_fit_plots(df: pd.DataFrame):
               r_squared = r_value ** 2
 
               # Store identifier, is_ref, intensity, slope, and r-squared in the dictionary
+              # Use the first 'start_rIntensity 44' value for each unique identifier and Is Ref combination
+              if (identifier, is_ref) not in first_start_rIntensity_44:
+                 first_start_rIntensity_44[(identifier, is_ref)] = id_ref_intensity_group['start_rIntensity 44'].iloc[0]
               identifier_stats[identifier].append({'is_ref': is_ref, 'intensity': intensity, 'slope': slope, 'intercept': intercept, 'R²': r_squared})
 
               # Add data to table and get color for each identifier
@@ -395,6 +419,7 @@ def raw_standard_intensity_ratio_fit_plots(df: pd.DataFrame):
               table_data['Identifier'].append(identifier) 
               table_data['Is Ref'].append(is_ref)
               table_data['Intensity'].append(intensity)
+              table_data['Initial Intensity 44'].append(first_start_rIntensity_44[(identifier, is_ref)])
               table_data['Slope'].append(f'{slope:.2e}')  # Format in scientific notation
               table_data['Intercept'].append(f'{intercept:.2e}')  # Format in scientific notation
               table_data['R²'].append(f'{r_squared:.2e}')  # Format in scientific notation
@@ -577,3 +602,67 @@ def raw_standard_intensity_ratio_fit_plots(df: pd.DataFrame):
   )])
 
   return fig, fig_table
+
+def raw_standard_intensity_ratio_fit_par_to_database(df: pd.DataFrame):
+  """
+  Converts the raw intensity ratio fit parameters to a database.
+  Parameters
+  ----------
+  df : pd.DataFrame
+  A dataframe containing raw intensity ratio fit parameters.
+  Returns
+  -------
+  df_fit_params : pd.DataFrame
+  """
+  assert isinstance(df, pd.DataFrame), "Input must be a pandas DataFrame"
+
+  # Using dictionary comprehension to collect first 'start_rIntensity 44' values
+  first_start_rIntensity_44 = {
+      (identifier, is_ref): group['start_rIntensity 44'].iloc[0]
+      for identifier in df['Identifier 1'].unique()
+      for is_ref in df['Is Ref _'].unique()
+      for _, group in df[(df['Identifier 1'] == identifier) & (df['Is Ref _'] == is_ref)].groupby(['Identifier 1', 'Is Ref _'], observed=True)
+  }
+
+  # Collect linear regression stats for each identifier, is_ref, and intensity
+  stats_list = [
+      {
+          'identifier': identifier, 
+          'is_ref': is_ref,
+          'intensity': intensity,
+          'time_code': group['Time Code'].iloc[0],
+          'init_intensity_44': first_start_rIntensity_44[(identifier, is_ref)],
+          'slope': regres_result.slope, 
+          'intercept': regres_result.intercept, 
+          'r_squared': regres_result.rvalue ** 2
+      }
+      for identifier in df['Identifier 1'].unique()
+      for is_ref in df['Is Ref _'].unique()
+      for intensity in df['Intensity'].unique()
+      for _, group in df[(df['Identifier 1'] == identifier) & 
+                          (df['Is Ref _'] == is_ref) & 
+                          (df['Intensity'] == intensity)].groupby(['Identifier 1', 'Is Ref _', 'Intensity'], observed=True)
+      if len(group) > 0 and (regres_result := stats.linregress(group.index.values, group['Ratio'].astype(float)))
+  ]
+
+  # Convert stats list to DataFrame
+  df_intensity_stats = pd.DataFrame(stats_list)
+
+  # Adjusting column names and types for consistency
+  df_intensity_stats.rename(columns={
+      'time_code': 'time',
+      'identifier': 'standard', 
+      'is_ref': 'isref', 
+      'intensity': 'intensity_ratio', 
+      # 'init_intensity_44': 'initial_intensity_44', 
+      'r_squared': 'r2'
+  }, inplace=True)
+  df_intensity_stats['standard'] = df_intensity_stats['standard'].astype('string')
+  df_intensity_stats['intensity_ratio'] = df_intensity_stats['intensity_ratio'].astype('string')
+  df_intensity_stats['isref'] = df_intensity_stats['isref'].astype('string')
+
+  # Ensure that dataframe to be returned is a dataframe
+  assert isinstance(df_intensity_stats,
+                  pd.DataFrame), "df_intensity_stats must be a DataFrame"
+
+  return df_intensity_stats

@@ -43,7 +43,6 @@ def database_connection(func):
 
   return with_connection
 
-
 # Kiel dataframe column names when inserting data
 info_keys = [
     "acid_temperature",
@@ -58,10 +57,10 @@ info_keys = [
     "reference_bellow_position",
     "line",
     "standard",
+    "instrument"
 ]
 
-
-# Create postresql database table users
+# Create postresql database kiel table
 @database_connection
 def create_kiel_table(cur):
   # Include other columns from info_keys with appropriate data types
@@ -69,6 +68,7 @@ def create_kiel_table(cur):
   CREATE TABLE IF NOT EXISTS kiel_parameters (
       id SERIAL PRIMARY KEY,
       time TIMESTAMP UNIQUE NOT NULL,
+      instrument TEXT NOT NULL,
       "line" INTEGER NOT NULL,
       "standard" TEXT,
       "acid_temperature" FLOAT,
@@ -86,14 +86,81 @@ def create_kiel_table(cur):
   """)
   print("Kiel Parameters table created successfully")
 
+# Dictionary to map the pandas dataframe columns to the standard_parameters table entity names
+standard_column_rename_dict = {
+    'Line': 'line',
+    'Weight': 'weight',
+    'instrument': 'instrument',
+    'Identifier 1': 'standard',
+    '1  Cycle Int  Samp  44': 'init_intensity_44_sample',
+    '1  Cycle Int  Ref  44': 'init_intensity_44_reference',
+    'd 45CO2/44CO2  Std Dev': 'std_d45_44_co2',
+    'd 46CO2/44CO2  Std Dev': 'std_d46_44_co2',
+    'd 47CO2/44CO2  Std Dev': 'std_d47_44_co2',
+    'd 48CO2/44CO2  Std Dev': 'std_d48_44_co2',
+    'd 49CO2/44CO2  Std Dev': 'std_d49_44_co2'
+}
+
+# Create postresql database standards table
+@database_connection
+def create_standard_table(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS standard_parameters (
+        id SERIAL PRIMARY KEY,
+        time TIMESTAMP UNIQUE NOT NULL,
+        instrument TEXT NOT NULL,
+        line INTEGER NOT NULL,
+        standard TEXT NOT NULL,
+        weight FLOAT,
+        init_intensity_44_sample FLOAT,
+        init_intensity_44_reference FLOAT,
+        std_d45_44_co2 FLOAT,
+        std_d46_44_co2 FLOAT,
+        std_d47_44_co2 FLOAT,
+        std_d48_44_co2 FLOAT,
+        std_d49_44_co2 FLOAT
+    );
+    """)
+    print("Standard Parameters table created successfully")
+
+# Dictionary to map the pandas dataframe columns to the intensity_ratio_fit_pars table entity names
+intensity_ratio_fit_pars_column_rename_dict = {
+    'identifier': 'standard',
+    'instrument': 'instrument',
+    'isref': 'isref',
+    'intensity_tatio': 'intensity_ratio',
+    'init_intensity_44': 'init_intensity_44',
+    'slope': 'slope',
+    'intercept': 'intercept',
+    'r2': 'r2'
+}
+# Create postresql database standard ratios fits table
+@database_connection
+def create_intensity_ratio_fit_pars_table(cur):
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS intensity_ratio_fit_pars (
+        id SERIAL PRIMARY KEY,
+        time TIMESTAMP UNIQUE NOT NULL,
+        instrument TEXT NOT NULL,
+        standard TEXT NOT NULL,
+        isref TEXT NOT NULL,
+        intensity_ratio TEXT,
+        init_intensity_44 FLOAT,
+        slope FLOAT,
+        intercept FLOAT,
+        r2 FLOAT,
+        UNIQUE (time) -- Ensure the time is unique
+    );
+    """)
+    print("Intensity ratio fit parameters table created successfully")
 
 # Extend the existing functions to include an insert function for df_kiel_par
 @database_connection
 def insert_kiel_data(cur, df: pd.DataFrame):
-    
+
   # Ensure we have a pd.Dataframe object
   assert isinstance(df, pd.DataFrame), "Input must be a pandas DataFrame"
-  
+
   # This will convert NaN values to None, which psycopg2 will interpret as      NULL
   df = df.applymap(lambda x: None if pd.isna(x) else x)
 
@@ -111,8 +178,8 @@ def insert_kiel_data(cur, df: pd.DataFrame):
   placeholders = ", ".join(["%s"] * len(info_keys))
 
   # Generate the SQL command and insert each row
-  for index, row in df.iterrows():
-    # Check if the TimeCode already exists in the database
+  for _, row in df.iterrows():
+    # Check if the timestamp already exists in the database
     cur.execute("SELECT EXISTS(SELECT 1 FROM kiel_parameters WHERE time = %s)",
                 (row['time'], ))
     exists = cur.fetchone()[0]
@@ -130,32 +197,114 @@ def insert_kiel_data(cur, df: pd.DataFrame):
           # Log the exact value and column, or perform additional checks.
         continue  # Skip this row and continue with the next
 
-  print("Data inserted successfully, duplicates ignored based on timestamp.")
+  print("Kiel data inserted successfully, duplicates ignored based on timestamp.")
+
+# Function to insert data into the standard_parameters table
+@database_connection
+def insert_standard_parameters_data(cur, df: pd.DataFrame):
+    assert isinstance(df, pd.DataFrame), "Input must be a pandas DataFrame"
+    df = df.applymap(lambda x: None if pd.isna(x) else x)
+    df.rename(columns=standard_column_rename_dict, inplace=True)
+
+    df.index = df.index.strftime('%Y-%m-%d %H:%M:%S')
+    df.reset_index(inplace=True)
+    df.rename(columns={"Time Code": "time"}, inplace=True)
+
+    columns = ", ".join(["\"{}\"".format(key) for key in standard_column_rename_dict.values()])
+    placeholders = ", ".join(["%s"] * len(standard_column_rename_dict))
+
+    for _, row in df.iterrows():
+        # Check if the timestamp already exists in the database
+        cur.execute("SELECT EXISTS(SELECT 1 FROM standard_parameters WHERE time = %s)",
+                    (row['time'], ))
+        exists = cur.fetchone()[0]
+
+        if not exists:
+            values = tuple(row[key] for key in standard_column_rename_dict.values())
+            try:
+                sql = f"INSERT INTO standard_parameters (time, {columns}) VALUES (%s, {placeholders})"
+                cur.execute(sql, (row['time'], ) + values)
+            except psycopg2.Error as error:
+                print(f"Failed to insert data: {values}")
+                print(f"Error: {error}")
+                if "integer out of range" in str(error):
+                    print("One of the integer columns has a value out of range.")
+                continue
+
+    print("Standards data inserted successfully, duplicates ignored based on timestamp.")
+
+# Function that insert intensity ratio fit pars into the database
+@database_connection
+def insert_intensity_ratio_fit_pars(cur, df: pd.DataFrame):
+    # Add code to insert intensity ratio fit pars into the database
+    assert isinstance(df, pd.DataFrame), "Input must be a pandas DataFrame"
+    df = df.applymap(lambda x: None if pd.isna(x) else x)
+
+    # Add 1 minute jitter to timestamps for the same identifier ensuring uniqueness
+    df.sort_values(by=['standard', 'time'], inplace=True)
+    df['time'] = df.groupby('standard')['time'].transform(
+        lambda x: pd.to_datetime(x.iloc[0]) + pd.to_timedelta(range(len(x)), unit='T'))
+
+    # Convert 'time' column to a string with a format PostgreSQL understands
+    df['time'] = df['time'].dt.strftime('%Y-%m-%d %H:%M:%S')
+
+    # columns = ", ".join([f"\'{col}\'" for col in df.columns]) # original but didnot work
+    columns = ", ".join([f'"{col}"' for col in df.columns])
+    placeholders = ", ".join("%s" for _ in df.columns)
+
+    # Generate the SQL command to insert each row
+    # ON CONFLICT (time) DO NOTHING will ignore duplicates based on the timestamp
+    sql = f"INSERT INTO intensity_ratio_fit_pars ({columns}) VALUES ({placeholders}) ON CONFLICT (time) DO NOTHING"
+
+    # Iterate each row in the DataFrame for insertion
+    for _, row in df.iterrows():
+        # Extract the values as a tuple in the order of columns
+        values = tuple(row[col] for col in df.columns)
+        try:
+            # Execute the SQL command
+            # Add debugging print statements to check the data types
+          # print(f"SQL: {sql}")
+          # print(f"Values type: {type(values)}, Content: {values}")
+          # for value in values:
+              # print(f"{value}: {type(value)}")  # This will show you if any value is unexpectedly a list or tuple
+
+           cur.execute(sql, values)
+        except psycopg2.Error as error:
+            print(f"Failed to insert data: {values}")
+            print(f"Error: {error}")
+            continue  # Skip this row and continue with the next
+
+    print("Intensity ratio fit data inserted successfully, duplicates ignored based on timestamp.")
 
 # Fetch kiel data as pandas DataFrame
 @database_connection
-def fetch_kiel_data_as_dataframe(cur):
-    query = "SELECT * FROM kiel_parameters"
+def fetch_kiel_data_as_dataframe(cur, instrument_name):
+    query = "SELECT * FROM kiel_parameters WHERE instrument = %(instrument_name)s"
     with cur.connection.cursor() as cursor:
-        cursor.execute(query)
+        cursor.execute(query, {"instrument_name": instrument_name})
         colnames = [desc[0] for desc in cursor.description]
         records = cursor.fetchall()
     df = pd.DataFrame(records, columns=colnames)
     return df
 
-# Read postresql database table users
+# Fetch standard data as pandas DataFrame
 @database_connection
-def read_table(cur):
-  cur.execute("SELECT * FROM kiel_parameters")
-  rows = cur.fetchall()
-  print("Table Kiel Parameters:")
-  for row in rows:
-    print(row)
+def fetch_standard_data_as_dataframe(cur, instrument_name):
+    query = "SELECT * FROM standard_parameters WHERE instrument = %(instrument_name)s"
+    with cur.connection.cursor() as cursor:
+        cursor.execute(query, {"instrument_name": instrument_name})
+        colnames = [desc[0] for desc in cursor.description]
+        records = cursor.fetchall()
+    df = pd.DataFrame(records, columns=colnames)
+    return df
 
-
-# Fetch single user from database
-# @database_connection
-# def read_all_data(cur, name):
-#   cur.execute("SELECT * FROM )
-#   row = cur.fetchone()
-#   return row
+# Fetch intensity ratio fit data as pandas DataFrame
+@database_connection
+def fetch_intensity_ratio_fit_pars_as_dataframe(cur, instrument_name):
+    query = "SELECT * FROM intensity_ratio_fit_pars WHERE instrument = %(instrument_name)s"
+    with cur.connection.cursor() as cursor:
+        cursor.execute(query, {"instrument_name": instrument_name})
+        colnames = [desc[0] for desc in cursor.description]
+        records = cursor.fetchall()
+    df = pd.DataFrame(records, columns=colnames)
+    return df
