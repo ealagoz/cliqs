@@ -97,7 +97,10 @@ def get_kiel_data(df: pd.DataFrame):
     df_kiel_par = df.join(df_kiel_par_tmp.set_index('time'), on='Time Code', how='inner')
     
     # Drop Background column from df_kiel_par
-    df_kiel_par.drop(columns=["Background"], inplace=True)
+    if "Background" in df_kiel_par.columns:
+        df_kiel_par.drop(columns=["Background"], inplace=True)
+    else:
+        pass
 
     # Set 'Time Code' as index
     df_kiel_par.set_index('Time Code', inplace=True)

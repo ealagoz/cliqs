@@ -16,9 +16,6 @@ password = os.getenv('password')
 
 # Use variables to connect to the database instead of hardcoding the values
 db_url = f"postgresql://{username}:{password}@{hostname}/{database}"
-# db_url = os.environ["DATABASE_URL"]
-# print(f"Using database: {db_url}")
-
 
 # Database connection decorator
 def database_connection(func):
@@ -67,7 +64,7 @@ def create_kiel_table(cur):
   cur.execute("""
   CREATE TABLE IF NOT EXISTS kiel_parameters (
       id SERIAL PRIMARY KEY,
-      time TIMESTAMP UNIQUE NOT NULL,
+      time TIMESTAMP NOT NULL,
       instrument TEXT NOT NULL,
       "line" INTEGER NOT NULL,
       "standard" TEXT,
@@ -80,8 +77,9 @@ def create_kiel_table(cur):
       "vm1_after_transfer" FLOAT,
       "initial_intensity" FLOAT,
       "reference_intensity" FLOAT,
-      "reference_bellow_position" FLOAT
+      "reference_bellow_position" FLOAT, 
       -- Add any additional columns as needed
+      UNIQUE (time, instrument) -- Ensure the time&instrument are unique
   );
   """)
   print("Kiel Parameters table created successfully")
@@ -107,7 +105,7 @@ def create_standard_table(cur):
     cur.execute("""
     CREATE TABLE IF NOT EXISTS standard_parameters (
         id SERIAL PRIMARY KEY,
-        time TIMESTAMP UNIQUE NOT NULL,
+        time TIMESTAMP NOT NULL,
         instrument TEXT NOT NULL,
         line INTEGER NOT NULL,
         standard TEXT NOT NULL,
@@ -118,7 +116,8 @@ def create_standard_table(cur):
         std_d46_44_co2 FLOAT,
         std_d47_44_co2 FLOAT,
         std_d48_44_co2 FLOAT,
-        std_d49_44_co2 FLOAT
+        std_d49_44_co2 FLOAT,
+        UNIQUE (time, instrument) -- Ensure the time&instrument are unique
     );
     """)
     print("Standard Parameters table created successfully")
@@ -140,7 +139,7 @@ def create_intensity_ratio_fit_pars_table(cur):
     cur.execute("""
     CREATE TABLE IF NOT EXISTS intensity_ratio_fit_pars (
         id SERIAL PRIMARY KEY,
-        time TIMESTAMP UNIQUE NOT NULL,
+        time TIMESTAMP NOT NULL,
         instrument TEXT NOT NULL,
         standard TEXT NOT NULL,
         isref TEXT NOT NULL,
@@ -149,7 +148,7 @@ def create_intensity_ratio_fit_pars_table(cur):
         slope FLOAT,
         intercept FLOAT,
         r2 FLOAT,
-        UNIQUE (time) -- Ensure the time is unique
+        UNIQUE (time, instrument) -- Ensure the time&instrument are unique
     );
     """)
     print("Intensity ratio fit parameters table created successfully")
