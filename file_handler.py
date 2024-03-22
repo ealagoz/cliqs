@@ -44,8 +44,9 @@ def open_excel_file(file):
 
     Returns:
         tuple: A tuple containing two Pandas DataFrames.
-            - df_std_cp: A filtered DataFrame from 'clumped_export.wke' sheet.
-            - df_intensity_cp: A filtered DataFrame from 'clumped_all_cycles_extra_workin' sheet.
+            - df_std_cp: A filtered DataFrame from 'CLIQS_clumped_export_2203' sheet.
+            - df_intensity_cp: A filtered DataFrame from 'CLIQS_clumped_all_cycles_extra_' sheet.
+            - df_extra_cup: A filtered DataFrame from 'CLIQS_extra_cup_22032024.wke' sheet.
 
     Raises:
         FileNotFoundError: If the file is not found.
@@ -56,9 +57,10 @@ def open_excel_file(file):
   try:
     # Read the 'clumped_export.wke' and 'clumped_all_cycles_extra_workin' sheets
     workbook = xlrd.open_workbook(file, logfile=open(os.devnull, "w"))
-    df_std = pd.read_excel(workbook, sheet_name=workbook.sheet_names()[0])
+    df_extra_cup = pd.read_excel(workbook, sheet_name=workbook.sheet_names()[0])
+    df_std = pd.read_excel(workbook, sheet_name=workbook.sheet_names()[1])
     df_intensity = pd.read_excel(workbook,
-                                 sheet_name=workbook.sheet_names()[1])
+                                 sheet_name=workbook.sheet_names()[2])
   except FileNotFoundError:
     raise FileNotFoundError("File not found!")
 
@@ -77,16 +79,19 @@ def open_excel_file(file):
   # Convert 'Time Code' to datetime format
   df_std_cp["Time Code"] = pd.to_datetime(df_std_cp["Time Code"])
   df_intensity_cp["Time Code"] = pd.to_datetime(df_intensity_cp["Time Code"])
+  df_extra_cup["Time Code"] = pd.to_datetime(df_extra_cup["Time Code"])
 
   # Identify and convert columns containing text values to strings
   text_columns_std = df_std_cp.select_dtypes(include=["object"]).columns
   text_columns_intensity = df_intensity_cp.select_dtypes(
       include=["object"]).columns
+  text_columns_extra = df_extra_cup.select_dtypes(include=["object"]).columns
 
   df_std_cp[text_columns_std] = df_std_cp[text_columns_std].astype("string")
   df_intensity_cp[text_columns_intensity] = df_intensity_cp[
       text_columns_intensity].astype("string")
+  df_extra_cup[text_columns_extra] = df_extra_cup[text_columns_extra].astype("string")
   # numeric columns
   # numeric_columns = df_std_cp.select_dtypes(include=["float64", "Int64"]).columns
 
-  return df_std_cp, df_intensity_cp
+  return df_std_cp, df_intensity_cp, df_extra_cup

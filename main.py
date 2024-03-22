@@ -82,22 +82,25 @@ def generate_dataframes():
   # Read the uploaded file into a pandas DataFrame
   if uploaded_file is not None and uploaded_file != 0:
     # Load the data
-    df_std, df_intensity = open_excel_file(uploaded_file)
+    df_std, df_intensity, df_extra_cup = open_excel_file(uploaded_file)
     # Get kiel data
     df_kiel_par = get_kiel_data(df_std)
 
     # print(df_kiel_par.head())
 
-    return df_std, df_kiel_par, df_intensity
+    return df_std, df_kiel_par, df_intensity, df_extra_cup
 
   else:
-    return None, None, None
+    return None, None, None, None
 
 # Insert data into the database
 def database_data_insert(df_kiel_par: pd.DataFrame, df_intensity: pd.DataFrame, df_intensity_ratio_fit: pd.DataFrame, instrument: str):
   """
     Insert data into the database.
     """
+  # Fetch instrument from session_state; default to "Nessie" if not found
+  instrument = st.session_state.get('selected_instrument', 'Nessie')
+
   # Add instrument column to df_kiel_par
   df_kiel_par['instrument'] = instrument
   df_intensity_ratio_fit['instrument'] = instrument
@@ -106,6 +109,8 @@ def database_data_insert(df_kiel_par: pd.DataFrame, df_intensity: pd.DataFrame, 
   df_kiel_par['instrument'] = df_kiel_par['instrument'].astype('string')
 
   # print(df_intensity_ratio_fit.groupby('standard')['time'].first())
+  # print(f"Attempting to insert data for instrument: {instrument}")
+  # print(df_kiel_par.head(2)) # Check the first few rows for format and instrument
 
   # Create kiel table in the database
   create_kiel_table()
@@ -333,6 +338,7 @@ def select_instrument():
 
     # Safety check: Ensure instrument is not None
     instrument = instrument or "Nessie"
+    st.session_state['selected_instrument'] = instrument
   
     # Write selected instrument to the main page with bold and red color
     st.markdown(f"""**Selected instrument**: <span style="font-size: 20px; color:red; font-weight: bold;">{instrument}
@@ -357,7 +363,7 @@ def main():
 
   if option == "Run File":
     if not st.session_state.get('data_processed', False):
-      df_std, df_kiel_par, df_intensity = generate_dataframes()
+      df_std, df_kiel_par, df_intensity, df_extra_cup = generate_dataframes()
       if df_std is not None and df_kiel_par is not None and df_intensity is not None:
             # Initialize database and data insertion only once
             if not st.session_state['data_inserted']:

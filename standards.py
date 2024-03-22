@@ -193,7 +193,7 @@ def standard_marker_color(identifier):
                    'ISO B_new aliq', 'Merck', 'NBS18', 'NBS19', 
                    'Riedel', 'Speleo 2-8E', 'Speleo 9-25G', 'UN_CM12', 
                    'CHALK_2', '_IAEA C2_2', '_Isolab A 2', 
-                   'ISOB_2', '_Riedel 2', 'Merck'
+                   'ISO B_2', '_Riedel 2', 'MERCK'
                    ] 
 
     # Print the identifier that the function is trying to find
