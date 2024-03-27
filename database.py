@@ -247,31 +247,33 @@ def insert_intensity_ratio_fit_pars(cur, df: pd.DataFrame):
     # Convert 'time' column to a string with a format PostgreSQL understands
     df['time'] = df['time'].dt.strftime('%Y-%m-%d %H:%M:%S')
 
-    # columns = ", ".join([f"\'{col}\'" for col in df.columns]) # original but didnot work
-    columns = ", ".join([f'"{col}"' for col in df.columns])
-    placeholders = ", ".join("%s" for _ in df.columns)
+    columns = ", ".join(['"{}"'.format(col) for col in intensity_ratio_fit_pars_column_rename_dict.values()])
+    placeholders = ", ".join(["%s"] * len(intensity_ratio_fit_pars_column_rename_dict))
 
     # Generate the SQL command to insert each row
     # ON CONFLICT (time) DO NOTHING will ignore duplicates based on the timestamp
-    sql = f"INSERT INTO intensity_ratio_fit_pars ({columns}) VALUES ({placeholders}) ON CONFLICT (time) DO NOTHING"
+    sql = f"INSERT INTO intensity_ratio_fit_pars ({columns}) VALUES ({placeholders})"
+
+    # Rename the columns to match the table columns
+    df.rename(columns=intensity_ratio_fit_pars_column_rename_dict, inplace=True)
 
     # Iterate each row in the DataFrame for insertion
     for _, row in df.iterrows():
-        # Extract the values as a tuple in the order of columns
-        values = tuple(row[col] for col in df.columns)
-        try:
-            # Execute the SQL command
-            # Add debugging print statements to check the data types
-          # print(f"SQL: {sql}")
-          # print(f"Values type: {type(values)}, Content: {values}")
-          # for value in values:
-              # print(f"{value}: {type(value)}")  # This will show you if any value is unexpectedly a list or tuple
+        # Check if the timestamp already exists in the database
+        cur.execute("SELECT EXISTS(SELECT 1 FROM intensity_ratio_fit_pars WHERE time = %s)",
+                    (row['time'], ))
+        exists = cur.fetchone()[0]
+        
+        if not exists:
+            values = tuple(row[col] for col in intensity_ratio_fit_pars_column_rename_dict.values())
 
-           cur.execute(sql, values)
-        except psycopg2.Error as error:
-            print(f"Failed to insert data: {values}")
-            print(f"Error: {error}")
-            continue  # Skip this row and continue with the next
+            try:
+                sql = f"INSERT INTO intensity_ratio_fit_pars (time, {columns}) VALUES (%s, {placeholders})"
+                cur.execute(sql, (row['time'],) + values)
+            except psycopg2.Error as error:
+                print(f"Failed to insert data: {values}")
+                print(f"Error: {error}")
+                continue
 
     print("Intensity ratio fit data inserted successfully, duplicates ignored based on timestamp.")
 

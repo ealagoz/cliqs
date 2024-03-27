@@ -51,18 +51,38 @@ def open_excel_file(file):
     Raises:
         FileNotFoundError: If the file is not found.
     """
+  # Define the sheet names to read
+  sheet_names = [
+      ('CLIQS_clumped_export_extra_2203', 'df_std'),
+      ('CLIQS_clumped_all_cycles_extra_', 'df_intensity'),
+      ('CLIQS_extra_cup_22032024.wke', 'df_extra_cup')]
+
   # Check if the file name has changed or is new before printing
   if 'uploaded_filename' in st.session_state and st.session_state.uploaded_filename not in st.session_state.get('printed_filenames', []):
       print("Uploaded file name:", st.session_state.uploaded_filename)
+
   try:
-    # Read the 'clumped_export.wke' and 'clumped_all_cycles_extra_workin' sheets
-    workbook = xlrd.open_workbook(file, logfile=open(os.devnull, "w"))
-    df_extra_cup = pd.read_excel(workbook, sheet_name=workbook.sheet_names()[0])
-    df_std = pd.read_excel(workbook, sheet_name=workbook.sheet_names()[1])
-    df_intensity = pd.read_excel(workbook,
-                                 sheet_name=workbook.sheet_names()[2])
+      # Read the sheets
+      workbook = xlrd.open_workbook(file, logfile=open(os.devnull, "w"))
+      # Get dataframes assigned to each sheet in sheet_names
+      # print("Worksheet names:", workbook.sheet_names())
+
+      # Dictionary to hold dataframes
+      dfs = {name: pd.DataFrame() for _, name in sheet_names}
+
+      # Read data from the Excel file
+      for sheet, df_name in sheet_names:
+          # print(f"Reading data from {sheet} sheet")
+          if sheet in workbook.sheet_names():
+              dfs[df_name] = pd.read_excel(workbook, sheet_name=sheet)
+              # print(dfs[df_name].columns.str.strip())
   except FileNotFoundError:
-    raise FileNotFoundError("File not found!")
+      raise FileNotFoundError("File not found!")
+
+  # Accessing the dataframes
+  df_std = dfs['df_std']
+  df_intensity = dfs['df_intensity']
+  df_extra_cup = dfs['df_extra_cup']
 
   # # Filter both DataFrames to include only 'standard' and 'standard_refill' identifiers
   df_std_cp = df_std[df_std['Identifier 2'].isin(
