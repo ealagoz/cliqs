@@ -155,13 +155,17 @@ def plot_standard_parameters_ts(instrument_name):
                                      "<extra></extra>"
                                     )
                                 )
+            # Set the y-axis range based on the minimum and maximum values of the parameter
+            min_value = filtered_df[parameter].min()
+            max_value = filtered_df[parameter].max()
+            fig.update_yaxes(range=[min_value, max_value], autorange=True)
 
-        # Setting plot title and axis titles
-        fig.update_layout(title=f'{standard_par_dict.get(parameter, parameter)}',
-                          # xaxis_title='Time',
-                          yaxis_title=parameter,
-                          autosize=True,
-                          )
+            # Setting plot title and axis titles
+            fig.update_layout(title=f'{standard_par_dict.get(parameter, parameter)}',
+                              # xaxis_title='Time',
+                              yaxis_title=parameter,
+                            #   autosize=True,
+                              )
 
         # Append the figure to the list of figures
         figs.append(fig)
@@ -226,10 +230,10 @@ def plot_intensity_ratio_fit_par_ts(instrument_name):
                                      customdata=custom_data,
                                      hovertemplate=
                                      "<b>Instrument</b>: %{customdata[0]}<br>" + 
-                                     "<b>StandardIs Reference</b>: %{customdata[1]}<br>" +
+                                     "<b>Standard</b>: %{customdata[1]}<br>" +
                                      "<b>Is Reference</b>: %{customdata[2]}<br>" + 
                                      "<b>Datetime</b>: %{customdata[3]}<br>" + 
-                                     f"<b>{parameter}</b>: %{{y}}" + 
+                                     f"<b>{fit_par_dict.get(parameter, parameter)}</b>: %{{y:.1e}}" +  # Use the parameter name from the fit_par_dict
                                      "<extra></extra>"
                                     )
                                 )
